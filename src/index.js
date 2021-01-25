@@ -115,7 +115,7 @@ app.get('/filterPosts', async (req, res) => {
 const start = async () => {
   try {
     const port = process.env.PORT ?? 3000
-    await app.listen(port)
+    await app.listen(port, '0.0.0.0')
   } catch (err) {
     app.log.error(err)
     process.exit(1)
