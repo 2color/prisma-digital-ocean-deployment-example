@@ -2,17 +2,23 @@ import http from 'k6/http'
 import { check, sleep, group } from 'k6'
 import { Trend, Rate } from 'k6/metrics'
 
+let FeedTrend = new Trend('Get feed')
+let CreateUserTrend = new Trend('Create user')
+let CreatePostTrend = new Trend('Create post')
+let CreateCommentTrend = new Trend('Create comment')
+let CreateLikeTrend = new Trend('Create like')
+
 export let options = {
-  vus: 10,
+  vus: 40,
   duration: '15s',
-  thresholds: {
-    http_req_duration: ['p(90) < 400'],
-  },
+  // httpDebug: 'full',
 }
 
 const SLEEP_DURATION = 0.1
 
-const baseUrl = 'http://localhost:3000'
+const baseUrl = __ENV.API_URL
+  ? `https://${__ENV.API_URL}`
+  : `http://localhost:3000`
 const endpoints = {
   user: `${baseUrl}/user`,
   post: `${baseUrl}/post`,
@@ -24,17 +30,21 @@ const endpoints = {
 export default function () {
   group('user flow', function () {
     // Get feed
-    let res = http.get(endpoints.feed)
-    check(res, { 'status was 200 (get feed)': (r) => r.status == 200 })
+    let getFeedRes = http.get(endpoints.feed)
+    check(getFeedRes, { 'status was 200 (get feed)': (r) => r.status == 200 })
+    FeedTrend.add(getFeedRes.timings.duration)
+
+    sleep(SLEEP_DURATION)
 
     // Create user
     let createUserRes = http.post(endpoints.user, {
-      email: `daniel+${Date.now()}@gmail.com`,
+      email: `daniel+${Date.now()}+${__VU}@gmail.com`,
       name: 'Daniel',
     })
     check(createUserRes, {
       'status was 200 (add user)': (r) => r.status == 200,
     })
+    CreateUserTrend.add(createUserRes.timings.duration)
 
     sleep(SLEEP_DURATION)
 
@@ -48,6 +58,8 @@ export default function () {
     check(createPostRes, {
       'status was 200 (add post)': (r) => r.status == 200,
     })
+    CreatePostTrend.add(createPostRes.timings.duration)
+
     let postId = JSON.parse(createPostRes.body).id
     sleep(SLEEP_DURATION)
 
@@ -60,6 +72,9 @@ export default function () {
     check(createCommentRes, {
       'status was 200 (add comment)': (r) => r.status == 200,
     })
+    CreateCommentTrend.add(createCommentRes.timings.duration)
+
+    sleep(SLEEP_DURATION)
 
     let createLikeRes = http.post(endpoints.like, {
       userEmail: userEmail,
@@ -68,6 +83,8 @@ export default function () {
     check(createLikeRes, {
       'status was 200 (add like)': (r) => r.status == 200,
     })
+    CreateLikeTrend.add(createLikeRes.timings.duration)
+
     sleep(SLEEP_DURATION)
   })
 }
