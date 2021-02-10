@@ -4,7 +4,7 @@ function createServer(opts = {}) {
   server.register(require('fastify-formbody'))
 
   server.register(require('./plugins/prisma'))
-  server.register(require('./plugins/routes'))
+  server.register(require('./plugins/api'))
 
   return server
 }
