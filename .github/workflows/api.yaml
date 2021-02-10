@@ -34,3 +34,19 @@ jobs:
       # run the migration in the test database
       - run: npx prisma db push --preview-feature
       - run: npm run test
+
+  k6_load_test:
+    name: k6 load test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    env:
+      API_URL: ${{ secrets.API_URL }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run cloud k6 test
+        uses: k6io/action@v0.2.0
+        with:
+          filename: loadtest.js
+          cloud: true
+          token: ${{ secrets.K6_CLOUD_API_TOKEN }}
