@@ -2,6 +2,7 @@ import http from 'k6/http'
 import { check, sleep, group } from 'k6'
 import { Trend, Rate } from 'k6/metrics'
 
+let StatusTrend = new Trend('Get status (no db)')
 let FeedTrend = new Trend('Get feed')
 let CreateUserTrend = new Trend('Create user')
 let CreatePostTrend = new Trend('Create post')
@@ -9,8 +10,8 @@ let CreateCommentTrend = new Trend('Create comment')
 let CreateLikeTrend = new Trend('Create like')
 
 export let options = {
-  vus: 40,
-  duration: '15s',
+  vus: 20,
+  duration: '10s',
   // httpDebug: 'full',
 }
 
@@ -20,6 +21,7 @@ const baseUrl = __ENV.API_URL
   ? `https://${__ENV.API_URL}`
   : `http://localhost:3000`
 const endpoints = {
+  status: `${baseUrl}/`,
   user: `${baseUrl}/user`,
   post: `${baseUrl}/post`,
   comment: `${baseUrl}/post/comment`,
@@ -29,6 +31,13 @@ const endpoints = {
 
 export default function () {
   group('user flow', function () {
+    // Get status
+    let getStatusRes = http.get(endpoints.status)
+    check(getStatusRes, { 'status was 200 (get status; no db)': (r) => r.status == 200 })
+    StatusTrend.add(getStatusRes.timings.duration)
+
+    sleep(SLEEP_DURATION)
+
     // Get feed
     let getFeedRes = http.get(endpoints.feed)
     check(getFeedRes, { 'status was 200 (get feed)': (r) => r.status == 200 })
