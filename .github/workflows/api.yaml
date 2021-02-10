@@ -48,5 +48,5 @@ jobs:
         uses: k6io/action@v0.2.0
         with:
           filename: loadtest.js
-          cloud: true
+          cloud: false
           token: ${{ secrets.K6_CLOUD_API_TOKEN }}
